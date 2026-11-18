@@ -1,3 +1,24 @@
 services:
+  db:
+    image: "postgres:latest"
+    environment:
+      POSTGRES_USER: zprefix
+      POSTGRES_PASSWORD: inventory
+      POSTGRES_DB: zprefix_inventory
+    volumes:
+      - $HOME/docker/volumes/postgres:/var/lib/postgresql
+    ports:
+      - "5432:5432"
   api:
     build: ./backend
+    environment:
+      DATABASE_URL: postgresql://zprefix:inventory@db:5432/zprefix_inventory
+      CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./backend:/server
+      - /server/node_modules
+    command: npm run dev
+    depends_on:
+      - db

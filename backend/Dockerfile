@@ -2,10 +2,12 @@ FROM node:alpine
 
 WORKDIR /server
 
-COPY . /server
-
-EXPOSE 8080
+COPY package*.json ./
 
 RUN npm install
+
+COPY . .
+
+EXPOSE 8080
 
 CMD [ "npm", "start" ]
