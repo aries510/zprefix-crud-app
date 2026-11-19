@@ -3,11 +3,20 @@
 /**
  * @type { Object.<string, import("knex").Knex.Config> }
  */
-module.exports = {
+export default {
 
   development: {
     client: 'pg',
-    connection: 'postgresql://zprefix:inventory@db:5432/zprefix_inventory'
+    connection: {
+      host: 'localhost',
+      port: 5432,
+      user: 'zprefix',
+      password: 'inventory',
+      database: 'zprefix_inventory',
+    },
+    migrations: {
+      directory: './migrations',
+    },
   },
 
   // staging: {
