@@ -7,8 +7,8 @@ export default {
 
   development: {
     client: 'pg',
-    connection: {
-      host: 'db',
+    connection: process.env.DATABASE_URL || {
+      host: 'localhost',
       port: 5432,
       user: 'zprefix',
       password: 'inventory',
