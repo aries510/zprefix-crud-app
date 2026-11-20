@@ -8,7 +8,7 @@ export default {
   development: {
     client: 'pg',
     connection: {
-      host: 'localhost',
+      host: 'db',
       port: 5432,
       user: 'zprefix',
       password: 'inventory',
