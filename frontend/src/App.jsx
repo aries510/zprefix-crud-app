@@ -3,6 +3,8 @@ import './App.css'
 
 function App() {
   const [items, setItems] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -70,6 +72,29 @@ function App() {
     } catch(error) {
       setError(error.message);
     };
+  };
+
+  const createUser = async ({ first_name, last_name }) => {
+    const dbCreateUserAction = await fetch("http://localhost:8080/users", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ f_name: first_name, l_name: last_name }),
+    });
+
+    if(!dbCreateUserAction) {
+      throw new Error(`Failed to create user: ${dbCreateUserAction.status}`)
+    };
+
+    const userData = await dbCreateUserAction.json();
+    const rawUserData = Array.isArray(userData) ? userData : userData;
+
+    const userDataFormatted = {
+      id: rawUserData.user.id ?? rawUserData.id,
+      first_name: rawUserData.f_name ?? rawUserData.first_name,
+      last_name: rawUserData.l_name ?? rawUserData.last_name,
+    };
+
+    setUsers
   };
 
   if(loading) {

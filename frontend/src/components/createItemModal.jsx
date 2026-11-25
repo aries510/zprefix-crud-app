@@ -1,12 +1,20 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 function CreateItemModal({ isOpen, onClose, onCreate, users = [] }) {
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [qty, setQty] = useState(1);
-    const [userId, setUserId] = useState('');
+    const [ownerName, setOwnerName] = useState('');
     const [submit, setSubmit] = useState(false);
     const [error, setError] = useState(null);
+
+    const matchedUser = useMemo(() => {
+        const formatted = ownerName.trim().toLowerCase();
+        if(!formatted) {
+            return null
+        };
+        return users.find((user) => `${user.first_name} ${user.last_name}`.toLowerCase() === formatted) || null;
+    }, [ownerName, users]);
 
     if(!isOpen) {
         return null;
@@ -15,18 +23,34 @@ function CreateItemModal({ isOpen, onClose, onCreate, users = [] }) {
     const submitForm = async (event) => {
         event.preventDefault();
         setSubmit(true);
+        setError(null);
         try {
+            let resolvedUserId = matchedUser?.id || null;
+
+            if(ownerName.trim() && !matchedUser) {
+                const parts = ownerName.trim().split(/\s+/);
+                if(parts.length < 2){
+                    throw new Error('User not found. Enter both a first and last name to create a user.');
+                }
+
+                const [first_name, ...rest] = parts;
+                const last_name = rest.join(' ');
+
+                const createdUser = await onCreateUser({ first_name, last_name });
+                resolvedUserId = createdUser.id
+            };
+
             await onCreate({
                 name,
                 description,
                 qty: Number(qty),
-                user_id: userId ? Number(userId) : null,
+                user_id: resolvedUserId,
             });
 
             setName('');
             setDescription('');
             setQty(1);
-            setUserId('');
+            setOwnerName('');
             onClose();
         } catch(error) {
             setError(error.message || 'Failed to create item');
@@ -65,6 +89,7 @@ function CreateItemModal({ isOpen, onClose, onCreate, users = [] }) {
                         <textarea
                             value={description}
                             onChange={(event) => setDescription(event.target.value)}
+                            rows={3}
                             required
                             placeholder="Whatever you please...be professional Matt!"
                         />
@@ -73,7 +98,7 @@ function CreateItemModal({ isOpen, onClose, onCreate, users = [] }) {
                         Quantity
                         <input
                             type="number"
-                            min="1"
+                            min="0"
                             value={qty}
                             onChange={(event) => setQty(event.target.value)}
                             required
@@ -81,23 +106,36 @@ function CreateItemModal({ isOpen, onClose, onCreate, users = [] }) {
                     </label>
                     <label>
                         Owner
-                        {users.length > 0 ? (
-                            <select
-                                value={userId}
-                                onChange={(event) => setUserId(event.target.value)}
-                                required
-                            >
-                                <option value="">---Select owner---</option>
-                                {users.map((user) => (
-                                    <option key={user.id} value={user.id}>
-                                        {user.first_name} {user.last_name}
-                                    </option>
-                                ))}
-                            </select>
-                        ) : (
-                            
+                        <input
+                            type="text"
+                            list="users-datalist"
+                            value={ownerName}
+                            onChange={(event) => setOwnerName(event.target.value)}
+                            placeholder="First and Last name..."
+                            required
+                        />
+                        <datalist id="users-datalist">
+                            {users.map((user) => (
+                                <option key={user.id} value={`${user.first_name} ${user.last_name}`} />
+                            ))}
+                        </datalist>
+
+                        {ownerName.trim() && (
+                            <small>
+                                {matchedUser
+                                    ? `Existing user matched (ID# ${matchedUser.id})`
+                                    : `"${ownerName.trim()}" isn't in the database - a new user will be created`}
+                            </small>
                         )}
                     </label>
+                    <div className="create-item-modal-bottom-btns">
+                        <button type="button" onClick={onClose} disabled={submit}>
+                            Cancel
+                        </button>
+                        <button type="submit" disabled={submit}>
+                            {submit ? 'Saving...' : 'Add Item' }
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
